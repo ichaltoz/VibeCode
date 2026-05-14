@@ -19,8 +19,8 @@ export const usersRoute = new Elysia({ prefix: '/api' })
     return { data: result };
   }, {
     body: t.Object({
-      name: t.String(),
-      email: t.String(),
+      name: t.String({ maxLength: 255 }),
+      email: t.String({ maxLength: 255 }),
       password: t.String()
     })
   })
@@ -29,7 +29,7 @@ export const usersRoute = new Elysia({ prefix: '/api' })
     return { data: token };
   }, {
     body: t.Object({
-      email: t.String(),
+      email: t.String({ maxLength: 255 }),
       password: t.String()
     })
   })

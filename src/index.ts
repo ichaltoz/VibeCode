@@ -20,6 +20,9 @@ const app = new Elysia()
       case 'NOT_FOUND':
         set.status = 404;
         return { error: 'Not Found' };
+      case 'VALIDATION':
+        set.status = 400;
+        return { error: 'Validation Failed', detail: error.all };
       default:
         console.error(error);
         set.status = 500;

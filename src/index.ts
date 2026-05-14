@@ -2,8 +2,30 @@ import { Elysia } from 'elysia';
 import { db } from './db';
 import { users } from './db/schema';
 import { usersRoute } from './routes/users-route';
+import { UnauthorizedError, BadRequestError } from './utils/errors';
 
 const app = new Elysia()
+  .error({
+    UNAUTHORIZED: UnauthorizedError,
+    BAD_REQUEST: BadRequestError,
+  })
+  .onError(({ code, error, set }) => {
+    switch (code) {
+      case 'UNAUTHORIZED':
+        set.status = 401;
+        return { error: error.message };
+      case 'BAD_REQUEST':
+        set.status = 400;
+        return { error: error.message };
+      case 'NOT_FOUND':
+        set.status = 404;
+        return { error: 'Not Found' };
+      default:
+        console.error(error);
+        set.status = 500;
+        return { error: 'Internal Server Error' };
+    }
+  })
   .use(usersRoute)
   .get('/', () => 'Hello Elysia')
   .get('/ping', () => ({
@@ -11,12 +33,8 @@ const app = new Elysia()
     timestamp: new Date().toISOString(),
   }))
   .get('/users', async () => {
-    try {
-      const allUsers = await db.select().from(users);
-      return allUsers;
-    } catch (error) {
-      return { error: 'Database connection failed. Make sure MySQL is running and DATABASE_URL is correct.' };
-    }
+    const allUsers = await db.select().from(users);
+    return allUsers;
   })
   .listen(3000);
 

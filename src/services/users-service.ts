@@ -1,6 +1,7 @@
 import { db } from '../db';
 import { users, sessions } from '../db/schema';
 import { eq } from 'drizzle-orm';
+import { UnauthorizedError, BadRequestError } from '../utils/errors';
 
 export const registerUser = async (data: any) => {
   const { name, email, password } = data;
@@ -9,7 +10,7 @@ export const registerUser = async (data: any) => {
   const existingUser = await db.select().from(users).where(eq(users.email, email)).limit(1);
   
   if (existingUser.length > 0) {
-    throw new Error('Email Sudah Terdaftar');
+    throw new BadRequestError('Email Sudah Terdaftar');
   }
 
   // 2. Hash password
@@ -35,14 +36,14 @@ export const loginUser = async (data: any) => {
   const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
   if (!user) {
-    throw new Error('Email atau Password Salah');
+    throw new UnauthorizedError('Email atau Password Salah');
   }
 
   // 2. Verify password
   const isPasswordValid = await Bun.password.verify(password, user.password);
 
   if (!isPasswordValid) {
-    throw new Error('Email atau Password Salah');
+    throw new UnauthorizedError('Email atau Password Salah');
   }
 
   // 3. Generate session token
@@ -71,7 +72,7 @@ export const getCurrentUser = async (token: string) => {
     .limit(1);
 
   if (!result) {
-    throw new Error('Unauthorized');
+    throw new UnauthorizedError();
   }
 
   return result;
@@ -81,7 +82,7 @@ export const logoutUser = async (token: string) => {
   const result = await db.delete(sessions).where(eq(sessions.token, token));
   
   if (result[0].affectedRows === 0) {
-    throw new Error('Unauthorized');
+    throw new UnauthorizedError();
   }
 
   return 'OK';
